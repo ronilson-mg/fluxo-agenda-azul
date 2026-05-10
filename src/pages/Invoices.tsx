@@ -195,7 +195,8 @@ export default function Invoices({ subscription, userId }: InvoicesProps) {
   };
 
   const handleOpenAI = (invoice: Invoice) => {
-    const canAccess = subscription?.plano === 'business' || subscription?.plano === 'premium';
+    const isAdmin = subscription?.email === 'ronilsonaugustomg@gmail.com';
+    const canAccess = isAdmin || subscription?.plano === 'business' || subscription?.plano === 'premium';
     if (!canAccess) {
       setShowAIGateModal(true);
       return;
@@ -563,7 +564,7 @@ export default function Invoices({ subscription, userId }: InvoicesProps) {
       <AICollectionModal 
         invoice={selectedInvoiceForAI} 
         clientPhone={clients.find(c => c.id === selectedInvoiceForAI?.client_id)?.phone}
-        isPremium={subscription?.plano === 'premium'}
+        isPremium={subscription?.email === 'ronilsonaugustomg@gmail.com' || subscription?.plano === 'premium'}
         onClose={() => setSelectedInvoiceForAI(null)} 
       />
     </div>

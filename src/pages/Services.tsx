@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Subscription } from '../types';
 import { 
-  Scissors,
   Clock, 
   Plus, 
   Trash2,
@@ -27,19 +26,123 @@ interface Service {
 export default function Services({ subscription, userId }: { subscription: Subscription | null, userId: string }) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form state
+  const [name, setName] = useState('');
+  const [duration, setDuration] = useState('30');
+  const [price, setPrice] = useState('');
+  const [prepayment, setPrepayment] = useState('50');
+
+  const fetchServices = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('fa_services')
+        .select('*')
+        .eq('user_id', userId)
+        .order('name');
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setServices(data);
+        localStorage.setItem(`fa_services_${userId}`, JSON.stringify(data));
+      } else {
+        const localData = localStorage.getItem(`fa_services_${userId}`);
+        if (localData) {
+          setServices(JSON.parse(localData));
+        } else {
+          setServices([]);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching services:', err);
+      const localData = localStorage.getItem(`fa_services_${userId}`);
+      setServices(localData ? JSON.parse(localData) : []);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setServices([
-        { id: '1', name: 'Corte de Cabelo', duration: 40, price: 50, prepayment_percentage: 50, active: true },
-        { id: '2', name: 'Barba Terapia', duration: 30, price: 35, prepayment_percentage: 0, active: true },
-        { id: '3', name: 'Combo: Corte + Barba', duration: 60, price: 80, prepayment_percentage: 50, active: true },
-        { id: '4', name: 'Consultoria Financeira', duration: 90, price: 200, prepayment_percentage: 100, active: true },
-      ]);
-      setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchServices();
+  }, [userId]);
+
+  const handleOpenAdd = () => {
+    setEditingService(null);
+    setName(''); setDuration('30'); setPrice(''); setPrepayment('50');
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (service: Service) => {
+    setEditingService(service);
+    setName(service.name);
+    setDuration(service.duration.toString());
+    setPrice(service.price.toString());
+    setPrepayment(service.prepayment_percentage.toString());
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja excluir este serviço permanentemente?')) return;
+    
+    // Atualização otimista/fallback local
+    const updatedServices = services.filter(s => s.id !== id);
+    setServices(updatedServices);
+    localStorage.setItem(`fa_services_${userId}`, JSON.stringify(updatedServices));
+
+    try {
+      const { error } = await supabase.from('fa_services').delete().eq('id', id);
+      if (error) {
+        console.warn('Erro ao deletar do banco, mantendo local:', error);
+      } else {
+        showToast('Serviço removido com sucesso!');
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    
+    const serviceData = {
+      id: editingService?.id || Math.random().toString(36).substr(2, 9),
+      name,
+      duration: parseInt(duration),
+      price: parseFloat(price),
+      prepayment_percentage: parseInt(prepayment),
+      user_id: userId,
+      active: true
+    };
+
+    // Salvar localmente primeiro para garantir que o usuário veja a mudança
+    const updatedServices = editingService 
+      ? services.map(s => s.id === editingService.id ? serviceData : s)
+      : [serviceData, ...services];
+    
+    setServices(updatedServices);
+    localStorage.setItem(`fa_services_${userId}`, JSON.stringify(updatedServices));
+
+    try {
+      const { error } = editingService
+        ? await supabase.from('fa_services').update(serviceData).eq('id', editingService.id)
+        : await supabase.from('fa_services').insert(serviceData);
+      
+      if (error) throw error;
+      showToast(editingService ? 'Serviço atualizado!' : 'Serviço criado!');
+    } catch (err) {
+      console.error('Error saving to DB:', err);
+      showToast('Salvo localmente (Problema na conexão com o banco)', 'success');
+    } finally {
+      setShowModal(false);
+      setSubmitting(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -52,7 +155,10 @@ export default function Services({ subscription, userId }: { subscription: Subsc
           <h2 className="text-2xl font-display font-black text-brand-text uppercase tracking-tight">Meus Serviços</h2>
           <p className="text-brand-muted text-sm italic">Defina o que você oferece e configure o valor do sinal.</p>
         </div>
-        <button className="bg-brand-primary hover:bg-brand-primary-hover text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-brand-primary/20 transition-all">
+        <button 
+          onClick={handleOpenAdd}
+          className="bg-brand-primary hover:bg-brand-primary-hover text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-brand-primary/20 transition-all"
+        >
           <Plus className="w-4 h-4" /> Novo Serviço
         </button>
       </header>
@@ -73,7 +179,7 @@ export default function Services({ subscription, userId }: { subscription: Subsc
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-brand-bg border border-brand-border rounded-xl flex items-center justify-center text-brand-primary group-hover:scale-110 transition-transform shadow-inner">
-                    <Scissors className="w-6 h-6" />
+                    <Briefcase className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="font-display font-black text-brand-text uppercase tracking-tight">{service.name}</h3>
@@ -91,10 +197,16 @@ export default function Services({ subscription, userId }: { subscription: Subsc
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button className="p-2 text-brand-muted hover:text-brand-text hover:bg-brand-bg rounded-lg transition-all">
+                  <button 
+                    onClick={() => handleOpenEdit(service)}
+                    className="p-2 text-brand-muted hover:text-brand-text hover:bg-brand-bg rounded-lg transition-all"
+                  >
                     <Settings2 className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-brand-muted hover:text-brand-danger hover:bg-brand-danger/5 rounded-lg transition-all">
+                  <button 
+                    onClick={() => handleDelete(service.id)}
+                    className="p-2 text-brand-muted hover:text-brand-danger hover:bg-brand-danger/5 rounded-lg transition-all"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -119,14 +231,91 @@ export default function Services({ subscription, userId }: { subscription: Subsc
                   </div>
                 </div>
               </div>
-
-              <button className="w-full mt-6 py-3 bg-brand-bg hover:bg-brand-border border border-brand-border rounded-xl text-[10px] font-black uppercase tracking-widest text-brand-muted hover:text-brand-text transition-all flex items-center justify-center gap-2">
-                Ver Detalhes do Serviço <ChevronRight className="w-3 h-3" />
-              </button>
             </div>
           ))
         )}
       </div>
+
+      {/* Service Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-brand-bg/90 backdrop-blur-md" onClick={() => setShowModal(false)} />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-lg bg-brand-card border border-brand-border rounded-2xl shadow-2xl relative z-10"
+          >
+            <header className="p-6 border-b border-brand-border">
+              <h3 className="text-lg font-display font-black text-brand-text uppercase">
+                {editingService ? 'Editar Serviço' : 'Novo Serviço'}
+              </h3>
+            </header>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-brand-muted uppercase mb-1">Nome do Serviço</label>
+                <input 
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl p-3 text-sm"
+                  placeholder="Ex: Corte de Cabelo"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-brand-muted uppercase mb-1">Duração (Minutos)</label>
+                  <input 
+                    type="number"
+                    required
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    className="w-full bg-brand-bg border border-brand-border rounded-xl p-3 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-brand-muted uppercase mb-1">Preço (R$)</label>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    required
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full bg-brand-bg border border-brand-border rounded-xl p-3 text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-brand-muted uppercase mb-1">Sinal Exigido (%)</label>
+                <div className="flex items-center gap-4">
+                  <input 
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={prepayment}
+                    onChange={(e) => setPrepayment(e.target.value)}
+                    className="flex-1 accent-brand-primary"
+                  />
+                  <span className="font-bold text-brand-primary w-12">{prepayment}%</span>
+                </div>
+                <p className="text-[10px] text-brand-muted mt-1 italic">
+                  O cliente pagará R$ {((parseFloat(price || '0') * parseInt(prepayment)) / 100).toFixed(2)} adiantado.
+                </p>
+              </div>
+              <footer className="pt-6 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-xs font-bold text-brand-muted uppercase">Cancelar</button>
+                <button 
+                  type="submit" 
+                  disabled={submitting}
+                  className="bg-brand-primary text-white font-black px-8 py-3 rounded-xl text-xs uppercase tracking-widest disabled:opacity-50"
+                >
+                  {submitting ? 'Salvando...' : 'Confirmar'}
+                </button>
+              </footer>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 }

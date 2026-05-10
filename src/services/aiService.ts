@@ -1,7 +1,9 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const apiKey = (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) || "";
-const genAI = new GoogleGenerativeAI(apiKey);
+// Inicialização segura da IA seguindo as diretrizes oficiais
+const ai = new GoogleGenAI({ 
+  apiKey: (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) || "" 
+});
 
 export async function generateCollectionMessage(
   clientName: string,
@@ -10,44 +12,48 @@ export async function generateCollectionMessage(
   tone: 'friendly' | 'firm' | 'urgent',
   isPremium: boolean = false
 ) {
-  const model = genAI.getGenerativeModel({ 
-    model: isPremium ? "gemini-1.5-pro" : "gemini-1.5-flash" 
-  });
+  // Fallback imediato se não houver chave (evita erro de rede)
+  if (!(typeof process !== 'undefined' && process.env.GEMINI_API_KEY)) {
+    return `Olá ${clientName}, verifiquei aqui que o pagamento de R$ ${amount.toFixed(2)} (vencimento ${dueDate}) ainda não foi identificado. Como posso te ajudar a regularizar isso hoje?`;
+  }
+
+  // Seleção de modelo baseada no plano: Pro para Premium/Elite, Flash para os demais
+  const modelName = isPremium ? "gemini-3.1-pro-preview" : "gemini-3-flash-preview";
 
   const performancePrompt = isPremium 
-    ? "Use técnicas avançadas de gatilhos mentais da psicologia comportamental (como antecipação e reciprocidade). Adapte a linguagem para ser extremamente personalizada e persuasiva, mantendo a elegância."
-    : "Use uma linguagem profissional, clara e direta para incentivar o pagamento.";
+    ? "Aplique gatilhos mentais de reciprocidade, escassez e compromisso. Use uma linguagem extremamente personalizada, elegante e altamente persuasiva para garantir prioridade no pagamento."
+    : "Use uma linguagem clara, profissional e direta para incentivar o pagamento de forma amigável.";
 
   const prompt = `
-    Você é um especialista em cobrança e recuperação de crédito de alta performance, treinado em negociação e psicologia.
-    Crie uma mensagem irresistível para WhatsApp para cobrar um cliente.
+    Persona: Especialista em cobrança de alta performance e psicologia comportamental.
+    Tarefa: Criar uma mensagem curta (máx 350 caracteres) para WhatsApp.
     
     ESTRATÉGIA: ${performancePrompt}
+    TOM: ${tone === 'friendly' ? 'Amigável' : tone === 'firm' ? 'Firme' : 'Crítico/Urgente'}
     
-    Dados:
-    Cliente: ${clientName}
-    Valor: R$ ${amount.toFixed(2)}
-    Vencimento: ${dueDate}
-    Tom: ${tone === 'friendly' ? 'Amigável' : tone === 'firm' ? 'Firme' : 'Crítico/Urgente'}
+    DADOS:
+    - Cliente: ${clientName}
+    - Valor: R$ ${amount.toFixed(2)}
+    - Vencimento: ${dueDate}
     
-    CONSTITUIÇÃO E ÉTICA (OBRIGATÓRIO):
-    1. Respeite o Artigo 42 do CDC brasileiro: nada de intimidação ou constrangimento.
-    2. Linguagem elegante. Prefira "conciliação", "pendência", "ajuste de fluxo".
+    REGRAS CRÍTICAS (Art. 42 CDC):
+    - SEM constrangimento ou ameaças.
+    - Use termos como "pendência", "conciliação" ou "ajuste de fluxo".
+    - FOCO: Gerar ação (Pix/Resposta) imediata.
     
-    REGRAS:
-    - Máximo 350 caracteres.
-    - Use emojis profissionais (🤝, ✅, ⏳).
-    - FOCO: Gerar o pagamento imediato ou uma resposta.
-    - Retorne APENAS o texto.
+    Retorne APENAS o texto da mensagem com emojis profissionais.
   `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: prompt,
+    });
+
+    return response.text || `Olá ${clientName}, notei que o valor de R$ ${amount.toFixed(2)} está em aberto. Podemos fechar esse acerto agora para manter seu histórico positivo?`;
   } catch (error) {
-    console.error("Erro ao gerar mensagem por IA:", error);
-    // Fallback caso a IA falhe
-    return `Olá ${clientName}, notamos que o pagamento de R$ ${amount.toFixed(2)} vencido em ${dueDate} ainda não consta em nosso sistema. Poderia nos enviar o comprovante?`;
+    console.error("Erro na Gemini API:", error);
+    // Fallback de contingência para garantir que o usuário sempre tenha uma mensagem
+    return `Olá ${clientName}, verifiquei que o pagamento de R$ ${amount.toFixed(2)} (vencimento ${dueDate}) ainda não consta no sistema. Poderia me confirmar se já foi realizado?`;
   }
 }

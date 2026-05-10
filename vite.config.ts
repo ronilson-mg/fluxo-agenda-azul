@@ -14,10 +14,12 @@ export default defineConfig(({mode}) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.svg'],
         manifest: {
-          name: 'Fluxo Azul',
-          short_name: 'FluxoAzul',
-          description: 'Gestão financeira e recuperação de cobranças',
-          theme_color: '#3B82F6',
+          name: 'Fluxo Azul - Cobranças Inteligentes',
+          short_name: 'Fluxo Azul',
+          description: 'Sua central estratégica de controle financeiro e agenda.',
+          theme_color: '#0F172A',
+          background_color: '#0F172A',
+          display: 'standalone',
           icons: [
             {
               src: 'logo.svg',

@@ -30,6 +30,7 @@ export interface Subscription {
   nome?: string;
   plano: SubscriptionPlan;
   data_expiracao: string;
+  data_expiracao_agenda?: string;
   ativo: boolean;
   created_at: string;
 }

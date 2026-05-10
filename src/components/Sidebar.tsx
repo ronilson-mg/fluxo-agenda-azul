@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
-export type PageView = 'dashboard' | 'clients' | 'invoices' | 'appointments' | 'services' | 'plans' | 'settings' | 'admin';
+export type PageView = 'dashboard' | 'clients' | 'invoices' | 'appointments' | 'services' | 'plans' | 'settings' | 'admin' | 'reports';
 
 interface SidebarProps {
   currentPage: PageView;
@@ -41,13 +41,15 @@ export default function Sidebar({
   
   const financeItems = [
     { id: 'dashboard', label: 'Painel Financeiro', emoji: '📊' },
-    { id: 'clients', label: 'Meus Clientes', emoji: '👥' },
     { id: 'invoices', label: 'Todas Cobranças', emoji: '💰' },
+    { id: 'clients', label: 'Meus Clientes', emoji: '👥' },
+    { id: 'reports', label: 'Centro de Inteligência', emoji: '📈' },
   ] as const;
 
   const agendaItems = [
+    { id: 'dashboard', label: 'Painel Geral', emoji: '🖼️' },
     { id: 'appointments', label: 'Meus Horários', emoji: '📅' },
-    { id: 'services', label: 'Meus Serviços', emoji: '✂️' },
+    { id: 'services', label: 'Meus Serviços', emoji: '💼' },
     { id: 'clients', label: 'Meus Clientes', emoji: '👥' },
   ] as const;
 
@@ -166,7 +168,7 @@ export default function Sidebar({
             <p className="text-xs font-bold text-brand-text truncate uppercase">{userName}</p>
             <p className="text-[10px] text-brand-primary font-semibold flex items-center gap-1">
               <span>{userPlan.toLowerCase() === 'premium' ? '💎' : userPlan.toLowerCase() === 'business' ? '🚀' : userPlan.toLowerCase() === 'pro' ? '👑' : '⚡'}</span>
-              {userPlan} — {daysRemaining} dias
+              {isAdmin ? 'ACESSO ELITE' : `${userPlan} — ${daysRemaining} dias`}
             </p>
           </div>
         </div>

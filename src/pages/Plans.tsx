@@ -1,19 +1,51 @@
-import React from 'react';
-import { Rocket, Zap, Crown, Diamond, Check, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Rocket, Zap, Crown, Diamond, Check, Calendar, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
+import { format } from 'date-fns';
 
 // Número para contato
 const SUPPORT_WHATSAPP = '5531984132145';
 
 export default function Plans() {
-  
-  const handleUpgrade = async (plano: string, valor: string) => {
+  const [subscription, setSubscription] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSubscription();
+  }, []);
+
+  const fetchSubscription = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data } = await supabase
+      .from('fa_subscriptions')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .single();
+    
+    setSubscription(data);
+    setLoading(false);
+  };
+
+  const handleUpgrade = async (plano: string, valor: string, modulo?: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     const email = user?.email || 'não identificado';
-    const msg = `Olá! Quero assinar o Plano ${plano} R$ ${valor}/mês do FluxoAzul. Meu email: ${email}`;
+    const moduloStr = modulo ? ` para o módulo ${modulo.toUpperCase()}` : '';
+    const msg = `Olá! Quero assinar o Plano ${plano}${moduloStr} por R$ ${valor}/mês. Meu email: ${email}`;
     window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  const isExpired = (date?: string) => {
+    if (!date) return true;
+    return new Date(date) < new Date();
+  };
+
+  const formatDate = (date?: string) => {
+    if (!date) return 'Nunca Ativado';
+    return format(new Date(date), 'dd/MM/yyyy');
   };
 
   const planOptions = [
@@ -23,28 +55,27 @@ export default function Plans() {
       price: '0',
       period: '/14 dias — sem cartão',
       emoji: '⚡',
-      color: 'brand-muted',
+      color: 'white',
       features: [
-        'Até 10 clientes',
+        'Até 5 clientes',
         'Cobranças ilimitadas',
         'Mensagens WhatsApp + Pix',
         'Dashboard de Performance',
         'Health Score de Dívidas'
-      ],
-      current: true
+      ]
     },
     {
       id: 'pro',
       name: 'Pro',
       price: '69,90',
-      period: '/mês — cancele quando quiser',
+      period: '/mês — escolha um módulo',
       emoji: '👑',
       color: 'brand-primary',
       features: [
         'Clientes ILIMITADOS',
-        'Módulo Único (Fluxo OU Agenda)',
+        'Módulo Único: Fluxo OU Agenda',
+        'Centro de Inteligência (Básico)',
         'Painel de Vitórias (Contador)',
-        'Análise de Fluxo de Caixa',
         'Suporte Geral 9h-18h'
       ],
       popular: true
@@ -57,11 +88,11 @@ export default function Plans() {
       emoji: '🚀',
       color: 'blue-500',
       features: [
-        'COMBO MASTER (Fluxo + Agenda)',
-        'IA Persuasiva (Mensagens IA)',
-        'Relatórios PDF Estratégicos',
-        'Backup CSV Semanal',
-        'Sua Marca (Logo) nos links'
+        'COMBO MASTER: Fluxo + Agenda',
+        'Exportação PDF Profissional',
+        'Customização de Logo (Marca)',
+        'IA Persuasiva (Autocobrança)',
+        'Backup Semanal Automático'
       ]
     },
     {
@@ -72,11 +103,11 @@ export default function Plans() {
       emoji: '💎',
       color: 'brand-primary',
       features: [
-        'COMBO ELITE (Tudo Liberado)',
+        'COMBO ELITE: Tudo Liberado',
         'IA de Alta Performance (Pro)',
-        'Mentoria Individual Mensal',
-        'Canal de Feedback Direto',
-        'Acesso VIP a Novas IAs'
+        'Mentoria Individual de 1h Mensal',
+        'Acesso Antecipado a Novas IAs',
+        'Suporte VIP e Feedback Direto'
       ]
     }
   ];
@@ -84,9 +115,45 @@ export default function Plans() {
   return (
     <div className="p-4 sm:p-8 space-y-8 pb-20">
       <header className="text-center max-w-2xl mx-auto space-y-4">
-        <h2 className="text-2xl sm:text-4xl font-display font-black text-brand-text">Escolha seu Plano</h2>
+        <h2 className="text-2xl sm:text-4xl font-display font-black text-brand-text">Gestão Profissional para seu Negócio</h2>
         <p className="text-brand-muted font-sans text-sm sm:text-lg">Invista em organização e recupere muito mais do que paga. Acompanhe seu fluxo com quem entende de cobrança.</p>
       </header>
+
+      {subscription && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          <div className={cn(
+            "p-4 rounded-2xl border flex items-center justify-between",
+            isExpired(subscription.data_expiracao) ? "border-brand-danger/20 bg-brand-danger/5" : "border-brand-primary/20 bg-brand-primary/5"
+          )}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">💰</span>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-muted">Fluxo Azul (Financeiro)</p>
+                <p className={cn("text-xs font-bold", isExpired(subscription.data_expiracao) ? "text-brand-danger" : "text-brand-primary")}>
+                  {isExpired(subscription.data_expiracao) ? 'Vencido em:' : 'Expira em:'} {formatDate(subscription.data_expiracao)}
+                </p>
+              </div>
+            </div>
+            {isExpired(subscription.data_expiracao) && <AlertCircle className="w-5 h-5 text-brand-danger animate-pulse" />}
+          </div>
+
+          <div className={cn(
+            "p-4 rounded-2xl border flex items-center justify-between",
+            isExpired(subscription.data_expiracao_agenda) ? "border-brand-danger/20 bg-brand-danger/5" : "border-brand-primary/20 bg-brand-primary/5"
+          )}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📅</span>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-muted">Agenda Azul (Horários)</p>
+                <p className={cn("text-xs font-bold", isExpired(subscription.data_expiracao_agenda) ? "text-brand-danger" : "text-brand-primary")}>
+                  {isExpired(subscription.data_expiracao_agenda) ? 'Vencido em:' : 'Expira em:'} {formatDate(subscription.data_expiracao_agenda)}
+                </p>
+              </div>
+            </div>
+            {isExpired(subscription.data_expiracao_agenda) && <AlertCircle className="w-5 h-5 text-brand-danger animate-pulse" />}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {planOptions.map((plan) => (
@@ -127,18 +194,37 @@ export default function Plans() {
               ))}
             </ul>
 
-            <button 
-              onClick={() => plan.id !== 'trial' && handleUpgrade(plan.name, plan.price)}
-              disabled={plan.id === 'trial'}
-              className={cn(
-                "w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all transition-transform active:scale-95",
-                plan.popular 
-                  ? "bg-brand-primary hover:bg-brand-primary-hover text-white shadow-lg shadow-brand-primary/20" 
-                  : plan.id === 'trial' ? "bg-brand-bg text-brand-muted border border-brand-border cursor-default" : "bg-brand-bg hover:bg-brand-bg/50 text-brand-text border border-brand-border"
-              )}
-            >
-              {plan.id === 'trial' ? '🛡️ Plano Atual' : plan.id === 'premium' ? '💎 Assinar Elite' : `🔥 Pagar e Validar`}
-            </button>
+            {plan.id === 'pro' ? (
+              <div className="space-y-2">
+                <button 
+                  onClick={() => handleUpgrade(plan.name, plan.price, 'Fluxo')}
+                  className="w-full py-4 bg-brand-primary hover:bg-brand-primary-hover text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg shadow-brand-primary/20 active:scale-95"
+                >
+                  🚀 Ativar Fluxo Azul
+                </button>
+                <button 
+                  onClick={() => handleUpgrade(plan.name, plan.price, 'Agenda')}
+                  className="w-full py-4 bg-brand-bg hover:bg-brand-bg/50 text-brand-text border border-brand-border rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95"
+                >
+                  📅 Ativar Agenda Azul
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => plan.id !== 'trial' && handleUpgrade(plan.name, plan.price)}
+                disabled={plan.id === 'trial'}
+                className={cn(
+                  "w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all transition-transform active:scale-95",
+                  plan.id === 'trial' 
+                    ? "bg-brand-bg text-brand-muted border border-brand-border cursor-default" 
+                    : plan.id === 'premium' 
+                      ? "bg-brand-primary hover:bg-brand-primary-hover text-white shadow-lg shadow-brand-primary/20"
+                      : "bg-brand-bg hover:bg-brand-bg/50 text-brand-text border border-brand-border"
+                )}
+              >
+                {plan.id === 'trial' ? '✅ Plano Trial Ativo' : plan.id === 'premium' ? '💎 Assinar Elite' : `🔥 Pagar e Validar`}
+              </button>
+            )}
           </motion.div>
         ))}
       </div>

@@ -9,10 +9,12 @@ import {
   Plus, 
   ExternalLink,
   Mail,
-  UserCheck
+  UserCheck,
+  Rocket
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn, formatDate } from '../lib/utils';
+import { showToast } from '../lib/toast';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<'users' | 'clients'>('users');
@@ -56,25 +58,66 @@ export default function Admin() {
   const add30Days = async (subId: string) => {
     setActionLoading(subId);
     try {
-      const { data: sub } = await supabase.from('fa_subscriptions').select('data_expiracao').eq('id', subId).single();
+      const { data: sub } = await supabase.from('fa_subscriptions').select('*').eq('id', subId).single();
       if (!sub) return;
 
-      const currentExp = new Date(sub.data_expiracao);
-      // Se já estiver expirado, começamos de hoje. Se não, somamos ao que resta.
-      const baseDate = currentExp < new Date() ? new Date() : currentExp;
-      const newExp = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const isCombo = sub.plano === 'business' || sub.plano === 'premium';
+      
+      // Se for Pro, renovamos o módulo que tiver data mais recente ou estiver setada
+      // Se ambas as datas existirem e forem Pro, renovamos a que estiver mais próxima de vencer ou a que for "principal" (financeiro)
+      const isAgendaOnly = sub.plano === 'pro' && sub.data_expiracao_agenda && (!sub.data_expiracao || new Date(sub.data_expiracao_agenda) > new Date(sub.data_expiracao));
+
+      const updateData: any = { 
+        updated_at: new Date().toISOString(),
+        ativo: true
+      };
+
+      const calcNewExp = (currentExpStr?: string) => {
+        const currentExp = currentExpStr ? new Date(currentExpStr) : new Date();
+        const baseDate = currentExp < new Date() ? new Date() : currentExp;
+        return new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      };
+
+      if (isCombo) {
+        updateData.data_expiracao = calcNewExp(sub.data_expiracao);
+        updateData.data_expiracao_agenda = calcNewExp(sub.data_expiracao_agenda);
+      } else if (isAgendaOnly) {
+        updateData.data_expiracao_agenda = calcNewExp(sub.data_expiracao_agenda);
+      } else {
+        updateData.data_expiracao = calcNewExp(sub.data_expiracao);
+      }
+      
+      if (sub.plano === 'trial') updateData.plano = 'pro';
 
       const { error } = await supabase
         .from('fa_subscriptions')
-        .update({ 
-          data_expiracao: newExp, 
-          plano: 'pro', 
-          ativo: true,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', subId);
 
-      if (!error) await fetchData();
+      if (!error) {
+        showToast('Plano renovado com sucesso!', 'success');
+        await fetchData();
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      showToast('Erro ao renovar plano', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const changePlan = async (subId: string, newPlan: string) => {
+    setActionLoading(`plan-${subId}`);
+    try {
+      const { error } = await supabase
+        .from('fa_subscriptions')
+        .update({ plano: newPlan, updated_at: new Date().toISOString() })
+        .eq('id', subId);
+      
+      if (!error) {
+        showToast(`Plano alterado para ${newPlan.toUpperCase()}`, 'success');
+        await fetchData();
+      }
     } finally {
       setActionLoading(null);
     }
@@ -188,9 +231,9 @@ export default function Admin() {
                 <tr>
                   <th className="px-6 py-4 bg-brand-bg/50 whitespace-nowrap">Nome / Email</th>
                   <th className="px-6 py-4 bg-brand-bg/50 whitespace-nowrap">Plano</th>
-                  <th className="px-6 py-4 bg-brand-bg/50 whitespace-nowrap hidden sm:table-cell">Expira em</th>
+                  <th className="px-6 py-4 bg-brand-bg/50 whitespace-nowrap hidden sm:table-cell">Expiração (Fluxo / Agenda)</th>
                   <th className="px-6 py-4 bg-brand-bg/50 whitespace-nowrap hidden md:table-cell">Criado em</th>
-                  <th className="px-6 py-4 bg-brand-bg/50 text-right">Ação</th>
+                  <th className="px-6 py-4 bg-brand-bg/50 text-right">Ações de Renovação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border">
@@ -203,17 +246,33 @@ export default function Admin() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={cn(
-                        "text-[8px] sm:text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap",
-                        sub.plano === 'trial' ? "bg-orange-500/10 text-orange-500 border-orange-500/20" : "bg-brand-primary/10 text-brand-primary border-brand-primary/20"
-                      )}>
-                        {sub.plano.toUpperCase()}
-                      </span>
+                      <select 
+                        value={sub.plano}
+                        onChange={(e) => changePlan(sub.id, e.target.value)}
+                        disabled={actionLoading === `plan-${sub.id}`}
+                        className="bg-brand-bg border border-brand-border text-brand-text text-[10px] font-black rounded-lg px-2 py-1 outline-none focus:border-brand-primary transition-all uppercase"
+                      >
+                        <option value="trial">Trial</option>
+                        <option value="pro">Pro</option>
+                        <option value="business">Business</option>
+                        <option value="premium">Premium</option>
+                      </select>
                     </td>
-                    <td className="px-6 py-4 text-[10px] sm:text-xs hidden sm:table-cell whitespace-nowrap">
-                      <span className={new Date(sub.data_expiracao) < new Date() ? 'text-brand-danger font-bold' : 'text-brand-muted'}>
-                        {formatDate(sub.data_expiracao)}
-                      </span>
+                    <td className="px-6 py-4 text-[10px] sm:text-xs hidden sm:table-cell">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="opacity-40">💰</span>
+                          <span className={new Date(sub.data_expiracao) < new Date() ? 'text-brand-danger font-bold' : 'text-brand-muted'}>
+                            {formatDate(sub.data_expiracao)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="opacity-40">📅</span>
+                          <span className={!sub.data_expiracao_agenda || new Date(sub.data_expiracao_agenda) < new Date() ? 'text-brand-danger font-bold' : 'text-brand-muted'}>
+                            {sub.data_expiracao_agenda ? formatDate(sub.data_expiracao_agenda) : 'Nunca Ativado'}
+                          </span>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-[10px] sm:text-xs text-brand-muted hidden md:table-cell whitespace-nowrap">
                       {formatDate(sub.created_at)}
@@ -221,18 +280,18 @@ export default function Admin() {
                     <td className="px-6 py-4 text-right">
                       <button 
                         onClick={() => add30Days(sub.id)}
-                        disabled={actionLoading === sub.id}
+                        disabled={!!actionLoading}
                         className={cn(
-                          "transition-all text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-lg border whitespace-nowrap flex items-center gap-2 ml-auto",
-                          actionLoading === sub.id 
+                          "transition-all text-[10px] font-black px-4 py-2 rounded-xl border whitespace-nowrap flex items-center justify-center gap-2 ml-auto",
+                          actionLoading === sub.id
                             ? "bg-brand-muted/10 text-brand-muted border-brand-border cursor-not-allowed"
-                            : "bg-brand-primary/10 text-brand-primary hover:bg-brand-primary hover:text-white border-brand-primary/20"
+                            : "bg-brand-primary text-white hover:bg-brand-primary-hover border-brand-primary shadow-lg shadow-brand-primary/20"
                         )}
                       >
                         {actionLoading === sub.id ? (
-                          <span className="animate-spin">⏳</span>
+                          <span className="animate-spin text-xs">⏳</span>
                         ) : (
-                          <UserCheck className="w-3.5 h-3.5" />
+                          <Rocket className="w-3.5 h-3.5" />
                         )}
                         {actionLoading === sub.id ? 'PROCESSANDO...' : 'RENOVAR +30 DIAS'}
                       </button>

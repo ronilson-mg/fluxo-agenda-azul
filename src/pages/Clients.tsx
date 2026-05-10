@@ -6,6 +6,7 @@ import {
   Search, 
   Plus, 
   Pencil, 
+  Trash2,
   Mail,
   Phone,
   Rocket,
@@ -64,9 +65,10 @@ export default function Clients({ subscription, userId }: ClientsProps) {
     setEditingClient(null);
     setName(''); setEmail(''); setPhone(''); setNotes('');
     
-    // PLAN GATE: Trial limit of 10 clients
-    const isTrial = !subscription || subscription.plano === 'trial';
-    if (isTrial && clients.length >= 10) {
+    // PLAN GATE: Trial limit of 5 clients
+    const isAdmin = subscription?.email?.toLowerCase() === 'ronilsonaugustomg@gmail.com' || subscription?.plano === 'premium';
+    const isTrial = !isAdmin && subscription?.plano === 'trial';
+    if (isTrial && clients.length >= 5) {
       setShowLimitModal(true);
       return;
     }
@@ -82,6 +84,44 @@ export default function Clients({ subscription, userId }: ClientsProps) {
     setShowAddModal(true);
   };
 
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDeleteClient = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
+    
+    // Save current state for rollback
+    const previousClients = [...clients];
+    
+    // Optimistic delete
+    const updated = clients.filter(c => c.id !== id);
+    setClients(updated);
+    localStorage.setItem(`fa_clients_${userId}`, JSON.stringify(updated));
+
+    try {
+      const { error } = await supabase
+        .from('fa_clients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      showToast('Cliente removido com sucesso!');
+    } catch (err: any) {
+      console.error('Error deleting client:', err);
+      // Revert if DB delete failed (e.g. foreign key constraint)
+      setClients(previousClients);
+      localStorage.setItem(`fa_clients_${userId}`, JSON.stringify(previousClients));
+      
+      if (err.code === '23503') {
+        showToast('Não é possível excluir: este cliente possui agendamentos vinculados.', 'error');
+      } else {
+        showToast('Erro ao excluir do banco de dados', 'error');
+      }
+    }
+  };
+
   const handleAddClient = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -91,52 +131,57 @@ export default function Clients({ subscription, userId }: ClientsProps) {
     }
 
     setSubmitting(true);
+    const clientData: any = {
+      id: editingClient?.id || Math.random().toString(36).substr(2, 9),
+      user_id: userId,
+      name,
+      email: email || null,
+      phone: phone.replace(/\D/g, ''),
+      notes: notes || null,
+      total_spent: editingClient?.total_spent || 0,
+      appointments_count: editingClient?.appointments_count || 0,
+      active: true,
+      last_visit: editingClient?.last_visit || null
+    };
+
+    // Cache local imediato
+    const updatedClients = editingClient 
+      ? clients.map(c => c.id === editingClient.id ? clientData : c)
+      : [clientData, ...clients];
+    
+    setClients(updatedClients);
+    localStorage.setItem(`fa_clients_${userId}`, JSON.stringify(updatedClients));
+
     try {
-      // Clean phone number (digits only)
-      const cleanPhone = phone.replace(/\D/g, '');
-      if (cleanPhone.length < 10) {
-        showToast('WhatsApp inválido. Insira pelo menos 10 dígitos.', 'error');
-        setSubmitting(false);
-        return;
-      }
-
       if (editingClient) {
-        const { error } = await supabase
-          .from('fa_clients')
-          .update({ 
-            name, 
-            email: email || null, 
-            phone: cleanPhone, 
-            notes: notes || null 
-          })
-          .eq('id', editingClient.id);
-
+        const { error } = await supabase.from('fa_clients').update({
+          name, email: clientData.email, phone: clientData.phone, notes: clientData.notes
+        }).eq('id', editingClient.id);
         if (error) throw error;
-        showToast('Cliente atualizado com sucesso!');
+        showToast('Cliente atualizado!');
       } else {
-        const { error } = await supabase
-          .from('fa_clients')
-          .insert({ 
-            name, 
-            email: email || null, 
-            phone: cleanPhone, 
-            notes: notes || null, 
-            user_id: userId
-          });
-
+        const { data, error } = await supabase.from('fa_clients').insert({
+          user_id: userId, name, email: clientData.email, phone: clientData.phone, notes: clientData.notes
+        }).select().single();
+        
         if (error) throw error;
-        showToast('Cliente cadastrado com sucesso!');
+        
+        // Atualiza o ID local com o ID real do banco
+        if (data) {
+          const finalClients = [data, ...clients.filter(c => c.id !== clientData.id)];
+          setClients(finalClients);
+          localStorage.setItem(`fa_clients_${userId}`, JSON.stringify(finalClients));
+        }
+        showToast('Cliente cadastrado!');
       }
-
+    } catch (err) {
+      console.error('Error saving to DB:', err);
+      showToast('Salvo localmente (Problema conexão)', 'success');
+    } finally {
       setShowAddModal(false);
+      setSubmitting(false);
       setEditingClient(null);
       setName(''); setEmail(''); setPhone(''); setNotes('');
-      fetchClients();
-    } catch (err: any) {
-      console.error('Error saving client:', err);
-      showToast('Erro ao salvar cliente', 'error');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -146,7 +191,7 @@ export default function Clients({ subscription, userId }: ClientsProps) {
   );
 
   return (
-    <div className="p-4 sm:p-8 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-display font-bold text-brand-text">Clientes</h2>
@@ -213,13 +258,22 @@ export default function Clients({ subscription, userId }: ClientsProps) {
                     0 cobrança(s)
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => handleOpenEdit(client)}
-                      className="p-2 text-brand-muted hover:text-brand-primary transition-all rounded-lg hover:bg-brand-primary/10 border border-transparent hover:border-brand-primary/20"
-                      title="Editar Cliente"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button 
+                        onClick={() => handleOpenEdit(client)}
+                        className="p-2 text-brand-muted hover:text-brand-primary transition-all rounded-lg hover:bg-brand-primary/10 border border-transparent hover:border-brand-primary/20"
+                        title="Editar Cliente"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => setDeleteId(client.id)}
+                        className="w-9 h-9 flex items-center justify-center text-brand-muted hover:text-white transition-all rounded-xl hover:bg-brand-danger shadow-sm border border-transparent hover:border-brand-danger/20 group/trash"
+                        title="Excluir Cliente"
+                      >
+                        <Trash2 className="w-4 h-4 group-hover/trash:scale-110 transition-transform" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -327,7 +381,43 @@ export default function Clients({ subscription, userId }: ClientsProps) {
         </div>
       )}
 
-      {/* Limit Modal */}
+      {/* Confirm Delete Modal */}
+      {deleteId && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div 
+             className="absolute inset-0 bg-brand-bg/95 backdrop-blur-md"
+             onClick={() => setDeleteId(null)}
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-sm bg-brand-card border border-brand-danger/30 rounded-3xl p-8 shadow-2xl relative z-10 text-center"
+          >
+            <div className="w-16 h-16 bg-brand-danger/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-brand-danger/20">
+               <Trash2 className="text-brand-danger w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-display font-black text-brand-text uppercase tracking-tight mb-2">Excluir Cliente?</h3>
+            <p className="text-brand-muted text-xs leading-relaxed mb-8">
+              Tem certeza que deseja remover este cliente? <br/>
+              <span className="text-brand-danger font-bold uppercase tracking-tighter mt-2 inline-block">Essa ação não pode ser desfeita!</span>
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+               <button 
+                onClick={() => setDeleteId(null)}
+                className="py-3.5 rounded-xl font-bold text-brand-muted hover:bg-brand-bg transition-all uppercase text-[10px] tracking-widest border border-brand-border"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleDeleteClient}
+                className="bg-brand-danger hover:bg-red-600 text-white font-black py-3.5 rounded-xl transition-all shadow-lg shadow-brand-danger/20 uppercase text-[10px] tracking-widest"
+              >
+                Sim, Excluir
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
       {showLimitModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div 
@@ -344,12 +434,12 @@ export default function Clients({ subscription, userId }: ClientsProps) {
             </div>
             <h3 className="text-2xl font-display font-black text-brand-text uppercase tracking-tight mb-4 leading-tight">Limite Atingido!</h3>
             <p className="text-brand-muted text-sm font-sans mb-8 leading-relaxed">
-              Você atingiu o limite de 10 clientes no plano <strong>TRIAL</strong>. <br/>
+              Você atingiu o limite de 5 clientes no plano <strong>TRIAL</strong>. <br/>
               Assine o plano <strong>PRO</strong> para ter clientes ilimitados e continuar recuperando seus pagamentos!
             </p>
             <div className="space-y-3">
                <button 
-                onClick={() => window.open(`https://wa.me/5531984132145?text=Oi%20Ronilson,%20bati%20o%20limite%20de%2010%20clientes%20no%20Trial%20e%20quero%20o%20plano%20Pro!%20Meu%20email:%20${subscription?.email}`, '_blank')}
+                onClick={() => window.open(`https://wa.me/5531984132145?text=Oi%20Ronilson,%20bati%20o%20limite%20de%205%20clientes%20no%20Trial%20e%20quero%20o%20plano%20Pro!%20Meu%20email:%20${subscription?.email}`, '_blank')}
                 className="w-full bg-brand-primary hover:bg-brand-primary-hover text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-brand-primary/20 uppercase text-sm tracking-widest flex items-center justify-center gap-2 group"
               >
                 Upgrade Pro R$ 69,90 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

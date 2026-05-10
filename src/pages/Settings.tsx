@@ -123,6 +123,18 @@ export default function Settings({ userId }: SettingsProps) {
     }
   };
 
+  const handleLogoUpload = () => {
+    const isAdmin = subscription?.email === 'ronilsonaugustomg@gmail.com';
+    const isPaid = isAdmin || subscription?.plano === 'business' || subscription?.plano === 'premium';
+    
+    if (!isPaid) {
+      showToast('Customização de Logo disponível apenas nos planos BUSINESS e PREMIUM', 'error');
+      return;
+    }
+    
+    showToast('Recurso em desenvolvimento: Upload de imagem', 'info');
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -211,7 +223,10 @@ export default function Settings({ userId }: SettingsProps) {
             </div>
           </div>
           
-          <div className="border-2 border-dashed border-brand-border rounded-2xl p-6 sm:p-12 text-center space-y-4 hover:border-brand-primary/30 transition-all cursor-pointer group">
+          <div 
+            onClick={handleLogoUpload}
+            className="border-2 border-dashed border-brand-border rounded-2xl p-6 sm:p-12 text-center space-y-4 hover:border-brand-primary/30 transition-all cursor-pointer group"
+          >
              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-brand-bg rounded-xl flex items-center justify-center mx-auto border border-brand-border group-hover:bg-brand-primary/10 transition-all">
                 <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-brand-muted group-hover:text-brand-primary" />
              </div>
