@@ -78,7 +78,7 @@ export default function Plans() {
         'Painel de Vitórias (Contador)',
         'Suporte Geral 9h-18h'
       ],
-      popular: true
+      popular: false
     },
     {
       id: 'business',
@@ -93,7 +93,8 @@ export default function Plans() {
         'Customização de Logo (Marca)',
         'IA Persuasiva (Autocobrança)',
         'Backup Semanal Automático'
-      ]
+      ],
+      popular: true
     },
     {
       id: 'premium',
