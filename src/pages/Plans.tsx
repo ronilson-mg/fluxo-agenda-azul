@@ -106,9 +106,9 @@ export default function Plans() {
       features: [
         'COMBO ELITE: Tudo Liberado',
         'IA de Alta Performance (Pro)',
-        'Mentoria Individual de 1h Mensal',
+        'Consultoria de Implantação (1º Mês)',
         'Acesso Antecipado a Novas IAs',
-        'Suporte VIP e Feedback Direto'
+        'Suporte VIP Prioritário via WhatsApp',
       ]
     }
   ];
