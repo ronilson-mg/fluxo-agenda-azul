@@ -309,14 +309,14 @@ export default function App() {
 
         {currentPlan === 'premium' && (
           <button 
-            onClick={() => window.open('https://wa.me/5531984132145?text=Oi%20Ronilson,%20sou%20Premium%20e%20quero%20agendar%20minha%20mentoria%20de%201h%20deste%20mês', '_blank')}
+            onClick={() => window.open('https://wa.me/5531984132145?text=Olá%20Ronilson,%20sou%20cliente%20Premium%20do%20Fluxo%20Azul%20e%20gostaria%20de%20atendimento%20prioritário.')}
             className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 bg-brand-primary text-white p-3 sm:p-4 rounded-2xl shadow-2xl z-50 flex items-center gap-2 font-black text-[10px] sm:text-sm uppercase tracking-[0.2em] hover:scale-105 transition-all shadow-brand-primary/40 border border-white/10 group"
           >
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform">
               <span className="text-base sm:text-xl">🎯</span>
             </div>
-            <span className="hidden sm:inline">Agendar Mentoria Elite</span>
-            <span className="sm:hidden">Mentoria</span>
+            <span className="hidden sm:inline">Suporte VIP Premium</span>
+            <span className="sm:hidden">Suporte VIP</span>
           </button>
         )}
       </main>
