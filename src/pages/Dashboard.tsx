@@ -704,7 +704,7 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
               <span className="text-[8px] font-black bg-brand-primary/10 text-brand-primary px-2 py-1 rounded uppercase tracking-widest">Total: {statsData.totalAgendado}</span>
             </div>
 
-           <div className="space-y-4 flex-1">
+          <div className="space-y-4 flex-1 max-h-[320px] overflow-y-auto pr-1 scrollbar-thin">
             {upcomingAppointments.map((apt) => (
               <div key={apt.id} className="p-4 bg-brand-bg/50 border border-brand-border rounded-2xl hover:border-brand-primary/30 transition-all group">
                 <div className="flex justify-between items-start mb-2">
@@ -729,29 +729,16 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
           </div>
               ))}
               {upcomingAppointments.length === 0 && (
-                <div className="h-full flex flex-col items-center justify-center opacity-30 text-center py-10">
-                  <Clock className="w-8 h-8 mb-2" />
-                  <p className="text-[10px] font-bold uppercase px-4 tracking-widest">Nenhum horário agendado para hoje</p>
-                </div>
-              )}
+<div className="flex flex-col items-center justify-center h-48 text-brand-text/50">
+              <Clock className="w-8 h-8 mb-2" />
+              <p className="text-[10px] font-bold uppercase px-4 tracking-widest">Nenhum horário agendado para hoje</p>
             </div>
-            
-  <button 
-          onClick={() => {
-            // Empurra a rota diretamente na barra de endereço do navegador
-            window.history.pushState({}, '', '/appointments');
-            // Dispara um evento para o sistema entender que a URL mudou
-            window.dispatchEvent(new PopStateEvent('popstate'));
-          }}
-          className="mt-6 w-full py-3 border border-brand-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-primary hover:bg-brand-primary/10 transition-all"
-        >
-          Ver Agenda Completa
-        </button>
-          </div>
-        )}
+          )}
+        </div>
+<div className="mt-4 pt-2 border-t border-brand-primary/10 text-center text-[9px] font-medium uppercase tracking-widest text-brand-text/40">Deslize para ver mais horários do dia</div>
+    )}
 
-        {activeModule === 'agenda' ? (
-          /* Seção de Performance de Agenda para Agenda Azul */
+    {activeModule === 'agenda' ? (
           <div className="bg-brand-card border border-brand-border rounded-2xl p-6 shadow-xl shadow-black/20 flex flex-col">
             <h3 className="font-display font-bold text-brand-text mb-8 uppercase tracking-wide flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-brand-primary" />
