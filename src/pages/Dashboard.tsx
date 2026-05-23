@@ -693,48 +693,52 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
 
       {/* Charts Grid */}
       <div className={cn("grid grid-cols-1 gap-6", activeModule === 'agenda' ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
-        {activeModule === 'agenda' && (
-          /* Próximos na Agenda (NOVA SEÇÃO CASAMENTO) */
-          <div className="bg-brand-card border border-brand-border rounded-2xl p-6 shadow-xl shadow-black/20 flex flex-col justify-between min-h-[380px]">
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-display font-bold text-brand-text mb-0 uppercase tracking-wide flex items-center gap-2 text-sm">
-                    <Clock className="w-4 h-4 text-brand-primary" />
-                    Seus Próximos Horários
-                  </h3>
-                  <span className="text-[10px] font-black bg-brand-primary/10 text-brand-primary px-2.5 py-1 rounded-full uppercase tracking-widest">Hoje</span>
-                </div>
-
-                <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
-                  {upcomingAppointments && upcomingAppointments.length > 0 ? (
-                    upcomingAppointments.slice(0, 3).map((apt) => (
-                      <div key={apt.id} className="p-3 bg-brand-bg/40 border border-brand-border/60 rounded-xl flex items-center justify-between transition-all hover:border-brand-primary/30">
-                        <div>
-                          <p className="text-xs font-bold text-brand-text truncate max-w-[140px]">{apt.client_name || 'Cliente'}</p>
-                          <p className="text-[10px] text-brand-muted font-medium">{apt.service_name || 'Serviço'}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs font-black text-brand-primary">{apt.time}</p>
-                          <p className="text-[10px] text-emerald-500 font-bold italic">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(apt.price || 0)}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-brand-text/30 text-center">
-                      <Clock className="w-6 h-6 mb-2 opacity-40" />
-                      <p className="text-[10px] font-bold uppercase tracking-widest">Nenhum agendamento para hoje</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-brand-border/40 text-center">
-                <p className="text-[10px] text-brand-muted font-medium mb-1">Para gerenciar e ver o calendário completo:</p>
-                <span className="inline-block text-[10px] font-black text-brand-primary uppercase tracking-widest bg-brand-primary/5 px-3 py-1.5 rounded-lg border border-brand-primary/20">Acesse "Meus Horários" no menu lateral</span>
-              </div>
+       {activeModule === 'agenda' && (
+        <div className="bg-brand-card border border-brand-border rounded-2xl p-6 shadow-xl shadow-black/20 flex flex-col justify-between min-h-[380px]">
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-display font-bold text-brand-text mb-0 uppercase tracking-wide flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-brand-primary" />
+                Seus Próximos Horários
+              </h3>
+              <span className="text-[10px] font-black bg-brand-primary/10 text-brand-primary px-2.5 py-1 rounded-full uppercase tracking-widest">
+                Hoje
+              </span>
             </div>
+
+            <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
+              {upcomingAppointments && upcomingAppointments.length > 0 ? (
+                upcomingAppointments.slice(0, 3).map((apt) => (
+                  <div key={apt.id} className="p-3 bg-brand-bg/40 border border-brand-border/60 rounded-xl flex items-center justify-between transition-all hover:border-brand-primary/30">
+                    <div>
+                      <p className="text-xs font-bold text-brand-text truncate max-w-[140px]">{apt.client_name || 'Cliente'}</p>
+                      <p className="text-[10px] text-brand-muted font-medium">{apt.service_name || 'Serviço'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-black text-brand-primary">{apt.time}</p>
+                      <p className="text-[10px] text-emerald-500 font-bold italic">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(apt.price || 0)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-brand-text/30 text-center">
+                  <Clock className="w-6 h-6 mb-2 opacity-40" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest">Nenhum agendamento para hoje</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-brand-border/40 text-center">
+            <p className="text-[10px] text-brand-muted font-medium mb-1">Para gerenciar e ver o calendário completo:</p>
+            <span className="inline-block text-[10px] font-black text-brand-primary uppercase tracking-wide bg-brand-primary/5 px-3 py-1.5 rounded-lg border border-brand-primary/20">
+              Acesse "Meus Horários" no menu lateral
+            </span>
+          </div>
+        </div>
+      )}
           <div className="bg-brand-card border border-brand-border rounded-2xl p-6 shadow-xl shadow-black/20 flex flex-col">
             <h3 className="font-display font-bold text-brand-text mb-8 uppercase tracking-wide flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-brand-primary" />
