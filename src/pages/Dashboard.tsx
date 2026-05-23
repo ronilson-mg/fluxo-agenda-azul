@@ -736,11 +736,13 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
               )}
             </div>
             
-     <button 
+    <button 
           onClick={() => {
-            const menuItems = Array.from(document.querySelectorAll('button, li, a'));
-            const agendaBtn = menuItems.find(el => el.textContent?.includes('Meus Horários')) as HTMLElement;
-            if (agendaBtn) agendaBtn.click();
+            if (typeof onPageChange === 'function') {
+              onPageChange('agenda');
+            }
+            // Força a atualização do hash da URL caso o sistema use rotas nativas
+            window.location.hash = '#agenda';
           }}
           className="mt-6 w-full py-3 border border-brand-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-primary hover:bg-brand-primary/10 transition-all"
         >
