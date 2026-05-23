@@ -737,7 +737,11 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
             </div>
             
      <button 
-          onClick={() => onPageChange('agenda')}
+          onClick={() => {
+            const menuItems = Array.from(document.querySelectorAll('button, li, a'));
+            const agendaBtn = menuItems.find(el => el.textContent?.includes('Meus Horários')) as HTMLElement;
+            if (agendaBtn) agendaBtn.click();
+          }}
           className="mt-6 w-full py-3 border border-brand-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-primary hover:bg-brand-primary/10 transition-all"
         >
           Ver Agenda Completa
