@@ -738,16 +738,12 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
             
     <button 
           onClick={() => {
-            const xpath = "//*[contains(text(), 'Meus Horários')]";
-            const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-            const element = result.singleNodeValue as HTMLElement;
-            
-            if (element) {
-              element.click();
-            } else {
-              const allElements = Array.from(document.getElementsByTagName('*'));
-              const backupElement = allElements.find(el => el.textContent?.trim() === 'Meus Horários') as HTMLElement;
-              if (backupElement) backupElement.click();
+            if (typeof onPageChange === 'function') {
+              // Testa os termos mais comuns que desenvolvedores usam para sub-abas de agendamentos
+              onPageChange('appointments');
+              onPageChange('horarios');
+              onPageChange('agenda-horarios');
+              onPageChange('agenda/horarios');
             }
           }}
           className="mt-6 w-full py-3 border border-brand-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-primary hover:bg-brand-primary/10 transition-all"
