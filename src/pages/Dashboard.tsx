@@ -736,9 +736,12 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
               )}
             </div>
             
-            <button className="mt-6 w-full py-3 border border-brand-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-primary hover:bg-brand-primary hover:text-white transition-all shadow-lg shadow-brand-primary/5">
-              Ver Agenda Completa
-            </button>
+     <button 
+          onClick={() => onPageChange('agenda')}
+          className="mt-6 w-full py-3 border border-brand-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-primary hover:bg-brand-primary/10 transition-all"
+        >
+          Ver Agenda Completa
+        </button>
           </div>
         )}
 
