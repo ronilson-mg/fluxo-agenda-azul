@@ -698,7 +698,7 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
           <div>
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-display font-bold text-brand-text mb-0 uppercase tracking-wide flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4 text-brand-primary" />
+                <Calendar className="w-4 h-4 text-brand-primary" />
                 Seus Próximos Horários
               </h3>
               <span className="text-[10px] font-black bg-brand-primary/10 text-brand-primary px-2.5 py-1 rounded-full uppercase tracking-widest">
@@ -724,7 +724,7 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-brand-text/30 text-center">
-                  <Clock className="w-6 h-6 mb-2 opacity-40" />
+                  <Calendar className="w-6 h-6 mb-2 opacity-40" />
                   <p className="text-[10px] font-bold uppercase tracking-widest">Nenhum agendamento para hoje</p>
                 </div>
               )}
