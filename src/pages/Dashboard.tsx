@@ -693,12 +693,11 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
 
       {/* Charts Grid */}
       <div className={cn("grid grid-cols-1 gap-6", activeModule === 'agenda' ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
-       {activeModule === 'agenda' && (
+      {activeModule === 'agenda' && (
         <div className="bg-brand-card border border-brand-border rounded-2xl p-6 shadow-xl shadow-black/20 flex flex-col justify-between min-h-[380px]">
           <div>
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-display font-bold text-brand-text mb-0 uppercase tracking-wide flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4 text-brand-primary" />
                 Seus Próximos Horários
               </h3>
               <span className="text-[10px] font-black bg-brand-primary/10 text-brand-primary px-2.5 py-1 rounded-full uppercase tracking-widest">
@@ -724,7 +723,6 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-brand-text/30 text-center">
-                  <Calendar className="w-6 h-6 mb-2 opacity-40" />
                   <p className="text-[10px] font-bold uppercase tracking-widest">Nenhum agendamento para hoje</p>
                 </div>
               )}
@@ -735,6 +733,10 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
             <p className="text-[10px] text-brand-muted font-medium mb-1">Para gerenciar e ver o calendário completo:</p>
             <span className="inline-block text-[10px] font-black text-brand-primary uppercase tracking-wide bg-brand-primary/5 px-3 py-1.5 rounded-lg border border-brand-primary/20">
               Acesse "Meus Horários" no menu lateral
+            </span>
+          </div>
+        </div>
+      )}
             </span>
           </div>
         </div>
