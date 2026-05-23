@@ -736,15 +736,12 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
               )}
             </div>
             
-    <button 
+  <button 
           onClick={() => {
-            if (typeof onPageChange === 'function') {
-              // Testa os termos mais comuns que desenvolvedores usam para sub-abas de agendamentos
-              onPageChange('appointments');
-              onPageChange('horarios');
-              onPageChange('agenda-horarios');
-              onPageChange('agenda/horarios');
-            }
+            // Empurra a rota diretamente na barra de endereço do navegador
+            window.history.pushState({}, '', '/appointments');
+            // Dispara um evento para o sistema entender que a URL mudou
+            window.dispatchEvent(new PopStateEvent('popstate'));
           }}
           className="mt-6 w-full py-3 border border-brand-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-brand-primary hover:bg-brand-primary/10 transition-all"
         >
