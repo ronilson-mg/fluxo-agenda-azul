@@ -87,7 +87,6 @@ export default function Admin() {
         updateData.data_expiracao = calcNewExp(sub.data_expiracao);
       }
       
-      if (sub.plano === 'trial') updateData.plano = 'pro';
 
       const { error } = await supabase
         .from('fa_subscriptions')
