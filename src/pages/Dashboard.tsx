@@ -153,7 +153,7 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
           .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))
           .slice(0, 5);
       }
-      setUpcomingAppointments(upcoming);
+      setUpcomingAppointments(upcoming.data || []);
 
       if (invResp.data) {
         const items = invResp.data.map(inv => {
@@ -708,22 +708,27 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
               {upcomingAppointments.map((apt) => (
                 <div key={apt.id} className="p-4 bg-brand-bg/50 border border-brand-border rounded-2xl hover:border-brand-primary/30 transition-all group">
                   <div className="flex justify-between items-start mb-2">
-                    <div>
-                     <p className="text-xs font-black text-brand-text uppercase tracking-tight truncate max-w-[120px]">
-  {apt.client?.name || apt.client_name || 'Cliente'}
-</p>
-<p className="text-[9px] text-brand-muted font-bold uppercase tracking-tighter">
-  {apt.service?.name || apt.service_name || 'Serviço'}
-</p>
-                      <p className="text-[10px] font-black text-brand-primary uppercase">{apt.time}</p>
-                      <p className="text-[8px] text-brand-muted font-bold">{formatDate(apt.date)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-brand-border/50">
-                    <p className="text-[10px] font-black text-emerald-500 italic">R$ {(apt.service?.price || 0).toFixed(2)}</p>
-                    <button className="text-[8px] font-black text-brand-primary uppercase tracking-widest hover:underline">Ver Detalhes</button>
-                  </div>
-                </div>
+                  <div className="flex flex-col">
+  <p className="text-xs font-black text-brand-text uppercase tracking-tight truncate max-w-[120px]">
+    {apt.client?.name || apt.client_name || 'Cliente'}
+  </p>
+  <p className="text-[9px] text-brand-muted font-bold uppercase tracking-tighter">
+    {apt.service?.name || apt.service_name || 'Serviço'}
+  </p>
+</div>
+<div className="text-right">
+  <p className="text-[10px] font-black text-brand-primary uppercase">{apt.time?.slice(0, 5)}</p>
+  <p className="text-[8px] text-brand-muted font-bold">{formatDate(apt.date)}</p>
+</div>
+</div>
+<div className="flex items-center justify-between pt-2 border-t border-brand-border/50">
+  <p className="text-[10px] font-black text-emerald-500 italic">
+    R$ {(apt.service?.price || apt.price || 0).toFixed(2)}
+  </p>
+  <button className="text-[8px] font-black text-brand-primary uppercase tracking-widest hover:underline">
+    Ver Detalhes
+  </button>
+</div>
               ))}
               {upcomingAppointments.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center opacity-30 text-center py-10">
