@@ -709,10 +709,12 @@ export default function Dashboard({ subscription, daysRemaining, userId, activeM
                 <div key={apt.id} className="p-4 bg-brand-bg/50 border border-brand-border rounded-2xl hover:border-brand-primary/30 transition-all group">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="text-xs font-black text-brand-text uppercase tracking-tight truncate max-w-[120px]">{apt.client?.name || 'Cliente'}</p>
-                      <p className="text-[9px] text-brand-muted font-bold uppercase tracking-tighter">{apt.service?.name || 'Serviço'}</p>
-                    </div>
-                    <div className="text-right">
+                     <p className="text-xs font-black text-brand-text uppercase tracking-tight truncate max-w-[120px]">
+  {apt.client?.name || apt.client_name || 'Cliente'}
+</p>
+<p className="text-[9px] text-brand-muted font-bold uppercase tracking-tighter">
+  {apt.service?.name || apt.service_name || 'Serviço'}
+</p>
                       <p className="text-[10px] font-black text-brand-primary uppercase">{apt.time}</p>
                       <p className="text-[8px] text-brand-muted font-bold">{formatDate(apt.date)}</p>
                     </div>
