@@ -2,5 +2,5 @@
   "name": "Fluxo Azul",
   "description": "Sistema completo de gestão financeira (Fluxo Azul) e agenda de atendimentos (Agenda Azul) com cobranças automáticas e recuperação de inadimplência.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
