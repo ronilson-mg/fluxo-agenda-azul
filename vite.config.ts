@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png'],
       workbox: {
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // Aumentamos o limite para 5MB
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,ico,png}']
       },
       manifest: {
         name: 'Agenda Azul',
