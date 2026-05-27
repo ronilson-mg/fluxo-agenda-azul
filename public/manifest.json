@@ -1,6 +1,6 @@
 {
-  "name": "Agenda Azul",
-  "short_name": "Agenda Azul",
+  "name": "Fluxo Azul",
+  "short_name": "Fluxo Azul",
   "description": "Gestão profissional de agenda e finanças para seu negócio.",
   "start_url": "/",
   "display": "standalone",
@@ -9,28 +9,14 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/logo.svg",
-      "type": "image/svg+xml",
+      "src": "/logo-nova.png",
       "sizes": "192x192",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "/logo.svg",
-      "type": "image/svg+xml",
+      "src": "/logo-nova.png",
       "sizes": "512x512",
-      "purpose": "any"
-    },
-    {
-      "src": "/logo.svg",
-      "type": "image/svg+xml",
-      "sizes": "192x192",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/logo.svg",
-      "type": "image/svg+xml",
-      "sizes": "512x512",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ]
 }
