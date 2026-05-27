@@ -16,7 +16,6 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
   });
 
   useEffect(() => {
-    // Verifica se já foi aceito nesta sessão ou se o usuário acabou de logar
     const hasAccepted = localStorage.getItem('fa_legal_accepted');
     if (!hasAccepted) {
       setIsOpen(true);
@@ -44,7 +43,6 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           className="bg-brand-card border border-brand-border w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         >
-          {/* Header */}
           <div className="p-8 bg-gradient-to-br from-brand-primary/10 to-transparent border-b border-brand-border relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10">
               <ShieldCheck className="w-24 h-24 text-brand-primary" />
@@ -58,11 +56,10 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
               </h2>
             </div>
             <p className="text-brand-muted text-sm font-medium">
-              Aviso obrigatório de segurança e responsabilidade jurídica.
+              Aviso obrigatório de segurança para Fluxo Azul e Agenda Azul.
             </p>
           </div>
 
-          {/* Content */}
           <div className="p-8 overflow-y-auto space-y-6">
             <div className="bg-brand-bg/50 border border-brand-border rounded-2xl p-6 space-y-4">
               <div className="flex gap-4">
@@ -70,7 +67,7 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
                 <div className="space-y-2">
                   <h3 className="font-bold text-brand-text uppercase text-xs tracking-widest">Responsabilidade do Usuário</h3>
                   <p className="text-sm text-brand-muted leading-relaxed">
-                    O <strong>FluxoAzul</strong> é uma plataforma de suporte técnico para gestão de cobranças. O usuário declara ser o único e exclusivo responsável pelo conteúdo das mensagens enviadas e pela relação com seus clientes. O FluxoAzul não possui qualquer vínculo com as dívidas cobradas.
+                    O <strong>Fluxo Azul</strong> e a <strong>Agenda Azul</strong> são plataformas tecnológicas de suporte. O usuário é o único e integral responsável pelo conteúdo, veracidade e licitude das comunicações. As plataformas não possuem qualquer vínculo com as relações comerciais entre você e seus clientes.
                   </p>
                 </div>
               </div>
@@ -80,53 +77,36 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
                 <div className="space-y-2">
                   <h3 className="font-bold text-brand-text uppercase text-xs tracking-widest">Conformidade LGPD & CDC</h3>
                   <p className="text-sm text-brand-muted leading-relaxed">
-                    O tratamento de dados pessoais de terceiros deve seguir estritamente a Lei 13.709/2018. É proibido o uso de termos abusivos, ameaças ou qualquer prática que fira o Art. 42 do Código de Defesa do Consumidor.
+                    O usuário compromete-se a cumprir a LGPD (Lei 13.709/2018) e o CDC, abstendo-se de práticas vexatórias. As plataformas não se responsabilizam por uso indevido, linguagem abusiva ou descumprimento de normas vigentes pelo usuário.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Checkboxes */}
             <div className="space-y-4 py-4">
               <label className="flex items-start gap-4 p-4 rounded-xl hover:bg-brand-bg/50 transition-colors cursor-pointer group">
-                <input 
-                  type="checkbox"
-                  checked={checkedTerms.responsibility}
-                  onChange={(e) => setCheckedTerms(prev => ({ ...prev, responsibility: e.target.checked }))}
-                  className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg"
-                />
+                <input type="checkbox" checked={checkedTerms.responsibility} onChange={(e) => setCheckedTerms(prev => ({ ...prev, responsibility: e.target.checked }))} className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg" />
                 <span className="text-sm text-brand-text font-medium leading-tight select-none">
-                  Entendo que sou o único responsável legal pelo envio das mensagens e Isento o FluxoAzul de qualquer litígio jurídico.
+                  Entendo que sou o único responsável legal e isento o Fluxo Azul e a Agenda Azul de qualquer responsabilidade civil ou criminal.
                 </span>
               </label>
 
               <label className="flex items-start gap-4 p-4 rounded-xl hover:bg-brand-bg/50 transition-colors cursor-pointer group">
-                <input 
-                  type="checkbox"
-                  checked={checkedTerms.lgpd}
-                  onChange={(e) => setCheckedTerms(prev => ({ ...prev, lgpd: e.target.checked }))}
-                  className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg"
-                />
+                <input type="checkbox" checked={checkedTerms.lgpd} onChange={(e) => setCheckedTerms(prev => ({ ...prev, lgpd: e.target.checked }))} className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg" />
                 <span className="text-sm text-brand-text font-medium leading-tight select-none">
-                  Comprometo-me a não utilizar termos abusivos e a respeitar a privacidade dos dados nos termos da LGPD.
+                  Comprometo-me a respeitar a LGPD e a não praticar cobranças abusivas ou vexatórias.
                 </span>
               </label>
 
               <label className="flex items-start gap-4 p-4 rounded-xl hover:bg-brand-bg/50 transition-colors cursor-pointer group">
-                <input 
-                  type="checkbox"
-                  checked={checkedTerms.commercialHours}
-                  onChange={(e) => setCheckedTerms(prev => ({ ...prev, commercialHours: e.target.checked }))}
-                  className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg"
-                />
+                <input type="checkbox" checked={checkedTerms.commercialHours} onChange={(e) => setCheckedTerms(prev => ({ ...prev, commercialHours: e.target.checked }))} className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg" />
                 <span className="text-sm text-brand-text font-medium leading-tight select-none">
-                  Estou ciente que o sistema só permite envios em horário comercial para evitar processos civil por importunação.
+                  Estou ciente que o sistema limita disparos ao horário comercial para evitar importunação.
                 </span>
               </label>
             </div>
           </div>
 
-          {/* Footer */}
           <div className="p-8 border-t border-brand-border bg-brand-bg/20 flex flex-col items-center gap-4">
             <button
               onClick={handleAccept}
