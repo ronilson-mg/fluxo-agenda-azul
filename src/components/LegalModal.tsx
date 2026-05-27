@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, Scale, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { supabase } from '../lib/supabase';
 
 interface LegalModalProps {
   onAccept: () => void;
@@ -22,8 +23,28 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
     }
   }, []);
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (checkedTerms.responsibility && checkedTerms.lgpd && checkedTerms.commercialHours) {
+      try {
+        // 1. Captura o IP do usuário
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        const userIp = data.ip;
+
+        // 2. Salva o registro de auditoria no Supabase
+        await supabase
+          .from('audit_legal_consent')
+          .insert([
+            { 
+              ip_address: userIp, 
+              terms_version: '1.0' 
+            }
+          ]);
+      } catch (error) {
+        console.error("Erro ao registrar auditoria:", error);
+      }
+
+      // 3. Finaliza a sessão no navegador
       localStorage.setItem('fa_legal_accepted', 'true');
       localStorage.setItem('fa_legal_timestamp', new Date().toISOString());
       setIsOpen(false);
