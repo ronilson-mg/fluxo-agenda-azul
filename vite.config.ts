@@ -12,31 +12,43 @@ export default defineConfig(({mode}) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.svg'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg', 'logo.png'],
         workbox: {
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         },
         manifest: {
-          name: 'Fluxo Azul - Cobranças Inteligentes',
+          name: 'Fluxo Azul',
           short_name: 'Fluxo Azul',
-          description: 'Sua central estratégica de controle financeiro e agenda.',
+          description: 'Sua central estratégica de controle financeiro e agenda com IA persuasiva.',
           theme_color: '#0F172A',
           background_color: '#0F172A',
           display: 'standalone',
           icons: [
             {
-              src: 'logo.svg',
-              sizes: 'any',
-              type: 'image/svg+xml',
+              src: 'logo.png',
+              sizes: '192x192',
+              type: 'image/png',
               purpose: 'any'
             },
             {
-              src: 'logo.svg',
-              sizes: 'any',
-              type: 'image/svg+xml',
+              src: 'logo.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'logo.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable'
+            },
+            {
+              src: 'logo.png',
+              sizes: '512x512',
+              type: 'image/png',
               purpose: 'maskable'
             }
-          ]
+         ]
         }
       })
     ],
