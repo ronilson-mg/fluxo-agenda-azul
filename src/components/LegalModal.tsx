@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, Scale, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Scale, CheckCircle2, RotateCw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { supabase } from '../lib/supabase';
+import { showToast } from '../lib/toast';
 
 interface LegalModalProps {
   onAccept: () => void;
@@ -10,13 +11,10 @@ interface LegalModalProps {
 
 export default function LegalModal({ onAccept }: LegalModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [checkedTerms, setCheckedTerms] = useState({
-    responsibility: false,
-    lgpd: false,
-    commercialHours: false
-  });
+  const [isAccepting, setIsAccepting] = useState(false);
 
   useEffect(() => {
+    // Só renderize se o localStorage não contiver o aceite
     const hasAccepted = localStorage.getItem('fa_legal_accepted');
     if (!hasAccepted) {
       setIsOpen(true);
@@ -24,128 +22,111 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
   }, []);
 
   const handleAccept = async () => {
-    if (checkedTerms.responsibility && checkedTerms.lgpd && checkedTerms.commercialHours) {
-      try {
-        // 1. Captura o IP do usuário
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        const userIp = data.ip;
-
-        // 2. Salva o registro de auditoria no Supabase
-        await supabase
-          .from('audit_legal_consent')
-          .insert([
-            { 
-              ip_address: userIp, 
-              terms_version: '1.0' 
-            }
-          ]);
-      } catch (error) {
-        console.error("Erro ao registrar auditoria:", error);
+    setIsAccepting(true);
+    let ip = '0.0.0.0';
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      if (res.ok) {
+        const data = await res.json();
+        ip = data.ip || '0.0.0.0';
       }
+    } catch (e) {
+      console.warn('Could not fetch user IP for audit logging:', e);
+    }
 
-      // 3. Finaliza a sessão no navegador
+    try {
+      const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      
+      const { error } = await supabase
+        .from('audit_legal_consent')
+        .insert({
+          ip_address: ip,
+          accepted_at: new Date().toISOString(),
+          user_id: user?.id || null,
+          user_email: user?.email || null,
+          terms_version: '1.0'
+        });
+
+      if (error) {
+        console.warn('Could not log legal consent in Supabase. Proceeding to ensure client user flow.', error.message);
+      }
+    } catch (dbErr) {
+      console.error('Database insertion error for consent audit:', dbErr);
+    } finally {
+      // Salva o aceite no localStorage
       localStorage.setItem('fa_legal_accepted', 'true');
       localStorage.setItem('fa_legal_timestamp', new Date().toISOString());
       setIsOpen(false);
+      // Dispara a função onAccept passada por props
       onAccept();
+      setIsAccepting(false);
+      showToast('Termos aceitos com sucesso!', 'success');
     }
   };
 
   if (!isOpen) return null;
 
-  const allChecked = checkedTerms.responsibility && checkedTerms.lgpd && checkedTerms.commercialHours;
-
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 sm:p-6 backdrop-blur-xl bg-black/60">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      <div 
+        id="legal-modal-backdrop"
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-black/60"
+      >
+        <motion.div
+          id="legal-modal-container"
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-brand-card border border-brand-border w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="max-w-md w-full bg-brand-bg border border-brand-border p-8 rounded-3xl shadow-2xl flex flex-col relative text-center"
         >
-          <div className="p-8 bg-gradient-to-br from-brand-primary/10 to-transparent border-b border-brand-border relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
-              <ShieldCheck className="w-24 h-24 text-brand-primary" />
-            </div>
-            <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-brand-primary/20 flex items-center justify-center border border-brand-primary/30">
-                <Scale className="text-brand-primary w-6 h-6" />
-              </div>
-              <h2 className="text-2xl font-black text-brand-text tracking-tight uppercase italic">
-                Termo de Conformidade Legal
-              </h2>
-            </div>
-            <p className="text-brand-muted text-sm font-medium">
-              Aviso obrigatório de segurança para Fluxo Azul e Agenda Azul.
+          {/* Accent icon banner */}
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20 mb-6 shadow-inner">
+            <Scale className="text-brand-primary w-7 h-7" />
+          </div>
+
+          <h2 className="text-lg font-display font-black text-brand-text mb-4 tracking-tight uppercase italic">
+            Termos & Conformidade Legal
+          </h2>
+
+          <div className="bg-brand-card/50 border border-brand-border/60 rounded-2xl p-5 mb-6 text-left">
+            <p className="text-brand-text text-xs leading-relaxed font-bold">
+              Para continuar utilizando o Fluxo Azul e a Agenda Azul, por favor, aceite nossos Termos de Uso e Política de Privacidade em conformidade com a LGPD.
             </p>
           </div>
 
-          <div className="p-8 overflow-y-auto space-y-6">
-            <div className="bg-brand-bg/50 border border-brand-border rounded-2xl p-6 space-y-4">
-              <div className="flex gap-4">
-                <AlertTriangle className="w-6 h-6 text-orange-500 shrink-0" />
-                <div className="space-y-2">
-                  <h3 className="font-bold text-brand-text uppercase text-xs tracking-widest">Responsabilidade do Usuário</h3>
-                  <p className="text-sm text-brand-muted leading-relaxed">
-                    O <strong>Fluxo Azul</strong> e a <strong>Agenda Azul</strong> são plataformas tecnológicas de suporte. O usuário é o único e integral responsável pelo conteúdo, veracidade e licitude das comunicações. As plataformas não possuem qualquer vínculo com as relações comerciais entre você e seus clientes.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <ShieldCheck className="w-6 h-6 text-brand-primary shrink-0" />
-                <div className="space-y-2">
-                  <h3 className="font-bold text-brand-text uppercase text-xs tracking-widest">Conformidade LGPD & CDC</h3>
-                  <p className="text-sm text-brand-muted leading-relaxed">
-                    O usuário compromete-se a cumprir a LGPD (Lei 13.709/2018) e o CDC, abstendo-se de práticas vexatórias. As plataformas não se responsabilizam por uso indevido, linguagem abusiva ou descumprimento de normas vigentes pelo usuário.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 py-4">
-              <label className="flex items-start gap-4 p-4 rounded-xl hover:bg-brand-bg/50 transition-colors cursor-pointer group">
-                <input type="checkbox" checked={checkedTerms.responsibility} onChange={(e) => setCheckedTerms(prev => ({ ...prev, responsibility: e.target.checked }))} className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg" />
-                <span className="text-sm text-brand-text font-medium leading-tight select-none">
-                  Entendo que sou o único responsável legal e isento o Fluxo Azul e a Agenda Azul de qualquer responsabilidade civil ou criminal.
-                </span>
-              </label>
-
-              <label className="flex items-start gap-4 p-4 rounded-xl hover:bg-brand-bg/50 transition-colors cursor-pointer group">
-                <input type="checkbox" checked={checkedTerms.lgpd} onChange={(e) => setCheckedTerms(prev => ({ ...prev, lgpd: e.target.checked }))} className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg" />
-                <span className="text-sm text-brand-text font-medium leading-tight select-none">
-                  Comprometo-me a respeitar a LGPD e a não praticar cobranças abusivas ou vexatórias.
-                </span>
-              </label>
-
-              <label className="flex items-start gap-4 p-4 rounded-xl hover:bg-brand-bg/50 transition-colors cursor-pointer group">
-                <input type="checkbox" checked={checkedTerms.commercialHours} onChange={(e) => setCheckedTerms(prev => ({ ...prev, commercialHours: e.target.checked }))} className="mt-1 w-5 h-5 rounded border-brand-border text-brand-primary focus:ring-brand-primary bg-brand-bg" />
-                <span className="text-sm text-brand-text font-medium leading-tight select-none">
-                  Estou ciente que o sistema limita disparos ao horário comercial para evitar importunação.
-                </span>
-              </label>
+          <div className="space-y-4 mb-8 text-left text-[11px] text-brand-muted leading-relaxed font-medium">
+            <div className="flex gap-3">
+              <ShieldCheck className="text-brand-primary w-4 h-4 shrink-0 mt-0.5" />
+              <p>Seus dados e de seus clientes estão protegidos de acordo com padrões de criptografia e conformidade jurídica.</p>
             </div>
           </div>
 
-          <div className="p-8 border-t border-brand-border bg-brand-bg/20 flex flex-col items-center gap-4">
-            <button
-              onClick={handleAccept}
-              disabled={!allChecked}
-              className={cn(
-                "w-full py-4 rounded-2xl font-black uppercase tracking-[3px] transition-all flex items-center justify-center gap-3 shadow-xl",
-                allChecked 
-                  ? "bg-brand-primary text-white hover:brightness-110 shadow-brand-primary/20" 
-                  : "bg-brand-border text-brand-muted cursor-not-allowed"
-              )}
-            >
-              <CheckCircle2 className="w-6 h-6" />
-              Eu Aceito e Desejo Acessar
-            </button>
-            <p className="text-[10px] text-brand-muted uppercase font-black tracking-widest text-center opacity-50">
-              IP: Registrado para fins de auditoria criminal
-            </p>
-          </div>
+          {/* Action button */}
+          <button
+            id="btn-accept-legal"
+            type="button"
+            onClick={handleAccept}
+            disabled={isAccepting}
+            className={cn(
+              "w-full py-4 rounded-2xl font-black text-xs uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2.5 shadow-xl select-none cursor-pointer border border-transparent",
+              isAccepting
+                ? "bg-brand-border text-brand-muted cursor-not-allowed"
+                : "bg-brand-primary text-white hover:scale-[1.02] active:scale-[0.98] shadow-brand-primary/25 hover:brightness-110"
+            )}
+          >
+            {isAccepting ? (
+              <>
+                <RotateCw className="w-4 h-4 animate-spin text-brand-muted" />
+                Registrando...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4" />
+                EU ACEITO E COMPREENDO
+              </>
+            )}
+          </button>
         </motion.div>
       </div>
     </AnimatePresence>
