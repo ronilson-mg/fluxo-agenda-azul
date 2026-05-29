@@ -236,3 +236,20 @@ export default function App() {
 
         <div className="p-6 md:p-8 flex-1">
           {renderPage()}
+        </div>
+
+        <footer className="p-6 border-t border-brand-border text-center bg-brand-bg md:py-8">
+          <p className="text-[10px] text-brand-muted uppercase font-black tracking-widest leading-relaxed">
+            FluxoAzul & AgendaAzul © 2026 - Soluções para MEI
+          </p>
+        </footer>
+      </main>
+
+      <ToastContainer />
+      <LegalModal onAccept={() => {}} />
+      <PWAInstallPrompt />
+      <PWABadge />
+      <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} userId={userId} />
+    </div>
+  );
+}
