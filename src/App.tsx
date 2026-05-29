@@ -16,7 +16,7 @@ import { Session } from '@supabase/supabase-js';
 import { cn } from './lib/utils';
 import { useToasts } from './lib/toast';
 import LegalModal from './components/LegalModal';
-import { Menu, X } from 'lucide-react';
+import { Menu, X as CloseIcon } from 'lucide-react';
 import ReferralModal from './components/ReferralModal';
 
 const ToastContainer = () => {
@@ -108,8 +108,6 @@ export default function App() {
     }
   };
 
-  const currentPlan = subscription?.status === 'active' ? subscription.plan_id : 'trial';
-
   const daysRemaining = (() => {
     if (!subscription) return null;
     const end = new Date(subscription.current_period_end);
@@ -198,7 +196,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-brand-bg flex text-brand-text">
-      {/* Sidebar Navigation */}
       <Sidebar 
         currentPage={currentPage}
         onPageChange={(page) => {
@@ -221,7 +218,6 @@ export default function App() {
       />
       
       <main className="flex-1 lg:ml-64 min-h-screen flex flex-col overflow-x-hidden">
-        {/* Mobile Header Top Navigation */}
         <header className="lg:hidden border-b border-brand-border bg-brand-card p-4 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center font-display font-black text-white text-xs">
@@ -234,29 +230,9 @@ export default function App() {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="text-brand-muted hover:text-brand-text p-2 cursor-pointer"
           >
-            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isSidebarOpen ? <CloseIcon className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </header>
 
-        {/* Dynamic Main App Page Render */}
         <div className="p-6 md:p-8 flex-1">
           {renderPage()}
-        </div>
-
-        {/* Main Footer branding */}
-        <footer className="p-6 border-t border-brand-border text-center bg-brand-bg md:py-8">
-          <p className="text-[10px] text-brand-muted uppercase font-black tracking-widest leading-relaxed">
-            FluxoAzul & AgendaAzul © 2026 - Soluções para MEI
-          </p>
-        </footer>
-      </main>
-
-      {/* Auxiliary Global Widgets, Modals & Toast notifications */}
-      <ToastContainer />
-      <LegalModal onAccept={() => {}} />
-      <PWAInstallPrompt />
-      <PWABadge />
-      <ReferralModal isOpen={showReferralModal} onClose={() => setShowReferralModal(false)} userId={userId} />
-    </div>
-  );
-}
