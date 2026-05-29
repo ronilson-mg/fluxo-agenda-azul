@@ -21,9 +21,6 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
     }
   }, []);
 
-  // ==========================================
-  // FUNÇÃO DE REGISTRO E AUDITORIA AUTOMÁTICA
-  // ==========================================
   const handleAccept = async () => {
     if (!isChecked) {
       showToast('Você precisa aceitar os termos antes de prosseguir.', 'error');
@@ -33,7 +30,6 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
     setIsAccepting(true);
     let ip = '0.0.0.0';
     try {
-      // Captura dinâmica do IP de forma assíncrona
       const res = await fetch('https://api.ipify.org?format=json');
       if (res.ok) {
         const data = await res.json();
@@ -46,7 +42,6 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
     try {
       const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
       
-      // Persistência juridicamente blindada no banco de dados
       const { error } = await supabase
         .from('audit_legal_consent')
         .insert({
@@ -54,7 +49,7 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
           accepted_at: new Date().toISOString(),
           user_id: user?.id || null,
           user_email: user?.email || null,
-          terms_version: '1.0' // Registro exato da versão dos textos
+          terms_version: '1.0'
         });
 
       if (error) {
@@ -63,7 +58,6 @@ export default function LegalModal({ onAccept }: LegalModalProps) {
     } catch (dbErr) {
       console.error('Database insertion error for consent audit:', dbErr);
     } finally {
-      // Salvaguarda local
       localStorage.setItem('fa_legal_accepted', 'true');
       localStorage.setItem('fa_legal_timestamp', new Date().toISOString());
       setIsOpen(false);
