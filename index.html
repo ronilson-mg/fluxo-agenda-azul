@@ -1,18 +1,53 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fluxo Azul - Cobranças Inteligentes</title>
-    <meta name="description" content="Gestão financeira e agenda para profissionais de alta performance." />
-    <meta name="theme-color" content="#0F172A" />
-    <link rel="icon" type="image/png" href="/logo.png" />
-    <link rel="apple-touch-icon" href="/logo.png" />
-    <link rel="manifest" href="/manifest.json" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+export type SubscriptionPlan = 'trial' | 'pro' | 'business' | 'premium';
 
+export interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  notes?: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface Invoice {
+  id: string;
+  client_id: string;
+  client_name: string;
+  description: string;
+  amount: number;
+  due_date: string;
+  status: 'open' | 'overdue' | 'paid';
+  paid_at?: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  email: string;
+  nome?: string;
+  plano: SubscriptionPlan;
+  data_expiracao: string;
+  data_expiracao_agenda?: string;
+  ativo: boolean;
+  created_at: string;
+}
+
+export interface Settings {
+  id: string;
+  user_id: string;
+  company_name: string;
+  pix_key: string;
+  support_phone: string;
+  logo_url?: string;
+}
+
+export interface Suggestion {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  created_at: string;
+}
